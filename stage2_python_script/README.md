@@ -1,7 +1,3 @@
-Absolutely! Here’s a **clean, concise README for Stage 2** tailored to your setup:
-
----
-
 # Stage 2: Python Script - DevOps Assignment
 
 ## Overview
@@ -49,7 +45,7 @@ Fetch `/hello` and save locally:
 python script.py --mode hello --api-url http://<FLASK-API-URL> --local-file hello.txt
 ```
 
-* `<FLASK-API-URL>` → VM IP with Flask/Nginx (e.g., `http://localhost` or `http://<VM-IP>`)
+* `<FLASK-API-URL>` → VM IP with Flask/Nginx (e.g., `http://localhost` or `http://<192.168.20.130>`)
 * `hello.txt` → local file that will contain the response
 
 Example:
@@ -101,4 +97,3 @@ cat /home/ahmed/random.txt
 
 * Ensure Flask API is running before executing the script.
 * Use PowerShell single-line command if running on Windows.
-* This script is prepared for **Dockerization** in Stage 3.
