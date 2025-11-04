@@ -64,7 +64,38 @@ stage1_api_server/
     └── playbook.yml
 ```
 ---
+## Connection Diagram
+          [Internet / Public IP]
+                    │
+                    ▼
+        +----------------------+
+        |      Router          | 
+        | Port Forward: 80 →   |
+        | Host PC Port 80      |
+        +----------------------+
+                    │
+                    ▼
+             [Windows Host PC]
+                    │
+      VMware NAT Port Forward: 80 → 80
+                    │
+                    ▼
+           [VMware VM (Linux)]
+        +-----------------------+
+        |       Nginx           |
+        | Listen: Port 80       |
+        | Reverse Proxy → 5000  |
+        +-----------------------+
+                    │
+                    ▼
+           [Flask App Server]
+           - GET /hello
+           - GET /random
+           - Running on port 5000
 
+---
+
+---
 ## Running the Project
 
 1. Ensure the VM is running and accessible via SSH.

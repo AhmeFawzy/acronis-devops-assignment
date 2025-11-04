@@ -1,5 +1,0 @@
-# Environment files
-.env
-
-# Docker output folder
-..\stage3_python_script_dockerfile\output\
