@@ -84,14 +84,5 @@ make build
 # Run hello mode (output saved in stage3/output/)
 make hello
 ```
-
-* **Folder:** `stage4_makefile/`
-* **Notes:**
-
-  * Avoid storing sensitive data (passwords, IPs) in Git
-  * Environment variables or `.env` can be used for secure data
-
-
-
 ---
 
