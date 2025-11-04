@@ -83,6 +83,5 @@ ansible-playbook -i inventory.ini playbook.yml --ask-become-pass
 
 Notes
     The playbook is idempotent: it can be run multiple times safely.
-
     The Flask app runs in a virtual environment to avoid system-wide package conflicts.
 
