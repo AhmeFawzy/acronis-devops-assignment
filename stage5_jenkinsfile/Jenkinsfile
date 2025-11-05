@@ -33,16 +33,6 @@ pipeline {
                             keyFileVariable: 'SSH_KEY_PATH',
                             usernameVariable: 'VM_USER'
                         )]) {
-                            sh '''
-                            echo "SSH_KEY_PATH = $SSH_KEY_PATH"
-                            if [ -f "$SSH_KEY_PATH" ]; then
-                                echo "✅ SSH key is a valid file."
-                                ls -l "$SSH_KEY_PATH"
-                            else
-                                echo "❌ ERROR: SSH key is NOT a file!"
-                                exit 1
-                            fi
-                            '''
                             sh """
                             docker run --rm -v \${SSH_KEY_PATH}:/root/.ssh/id_rsa:ro devops-python-script:stage3 \\
                                 --mode random \\
@@ -60,14 +50,8 @@ pipeline {
     }
 
     post {
-        always {
-            echo 'Pipeline finished.'
-        }
-        success {
-            echo '✅ Pipeline completed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed. Check logs above.'
-        }
+        always { echo 'Pipeline finished.' }
+        success { echo '✅ Pipeline completed successfully!' }
+        failure { echo '❌ Pipeline failed. Check logs above.' }
     }
 }
