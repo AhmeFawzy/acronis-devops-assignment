@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'MODE', choices: ['hello', 'random'], description: 'Choose mode to run')
+        string(name: 'REMOTE_HOST', defaultValue: '192.168.20.131', description: 'VM IP for random mode')
+        string(name: 'REMOTE_USER', defaultValue: 'floki', description: 'VM username for random mode')
+    }
+
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image for Stage 3 script...'
+                sh '''docker build -t devops-python-script:stage3 stage3_python_script_dockerfile'''
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                script {
+                    if (params.MODE == 'hello') {
+                        echo 'Running in HELLO mode...'
+                        sh '''
+                        mkdir -p stage3_python_script_dockerfile/output
+                        docker run --rm -v $(pwd)/stage3_python_script_dockerfile/output:/app/output devops-python-script:stage3 \
+                            --mode hello \
+                            --api-url http://host.docker.internal:5000 \
+                            --local-file /app/output/hello.txt
+                        '''
+                } else if (params.MODE == 'random') {
+                    echo 'Running in RANDOM mode...'
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'acronis-vm-ssh',
+                        keyFileVariable: 'SSH_KEY_PATH',
+                        usernameVariable: 'VM_USER'
+                    )]) {
+                        sh """
+                        docker run --rm -v \${SSH_KEY_PATH}:/root/.ssh/id_rsa:ro devops-python-script:stage3 \\
+                            --mode random \\
+                            --api-url http://192.168.20.131:5000 \\
+                            --remote-host ${params.REMOTE_HOST} \\
+                            --remote-user \${VM_USER} \\
+                            --ssh-key /root/.ssh/id_rsa \\
+                            --remote-file /home/\${VM_USER}/random.txt
+                        """
+                    }
+                }
+                }
+            }
+        }
+    }
+
+    post {
+        always { echo 'Pipeline finished.' }
+        success { echo '✅ Pipeline completed successfully!' }
+        failure { echo '❌ Pipeline failed. Check logs above.' }
+    }
+}

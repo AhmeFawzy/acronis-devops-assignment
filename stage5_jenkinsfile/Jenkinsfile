@@ -26,32 +26,49 @@ pipeline {
                             --api-url http://host.docker.internal:5000 \
                             --local-file /app/output/hello.txt
                         '''
-                } else if (params.MODE == 'random') {
-                    echo 'Running in RANDOM mode...'
-                    withCredentials([sshUserPrivateKey(
-                        credentialsId: 'acronis-vm-ssh',
-                        keyFileVariable: 'SSH_KEY_PATH',
-                        usernameVariable: 'VM_USER'
-                    )]) {
-                        sh """
-                        docker run --rm -v \${SSH_KEY_PATH}:/root/.ssh/id_rsa:ro devops-python-script:stage3 \\
-                            --mode random \\
-                            --api-url http://192.168.20.131:5000 \\
-                            --remote-host ${params.REMOTE_HOST} \\
-                            --remote-user \${VM_USER} \\
-                            --ssh-key /root/.ssh/id_rsa \\
-                            --remote-file /home/\${VM_USER}/random.txt
-                        """
+                    } else if (params.MODE == 'random') {
+                        echo 'Running in RANDOM mode...'
+                        withCredentials([sshUserPrivateKey(
+                            credentialsId: 'acronis-vm-ssh',
+                            keyFileVariable: 'SSH_KEY_PATH',
+                            usernameVariable: 'VM_USER'
+                        )]) {
+                            sh '''
+                            echo "SSH_KEY_PATH = $SSH_KEY_PATH"
+                            echo "File type:"
+                            ls -ld "$SSH_KEY_PATH"
+                            file "$SSH_KEY_PATH"
+                            if [ -f "$SSH_KEY_PATH" ]; then
+                                echo "✅ It's a file!"
+                            else
+                                echo "❌ It's NOT a file!"
+                            fi
+                            '''
+                            sh """
+                            docker run --rm -v \${SSH_KEY_PATH}:/root/.ssh/id_rsa:ro devops-python-script:stage3 \\
+                                --mode random \\
+                                --api-url http://192.168.20.131:5000 \\
+                                --remote-host ${params.REMOTE_HOST} \\
+                                --remote-user \${VM_USER} \\
+                                --ssh-key /root/.ssh/id_rsa \\
+                                --remote-file /home/\${VM_USER}/random.txt
+                            """
+                        }
                     }
-                }
                 }
             }
         }
     }
 
     post {
-        always { echo 'Pipeline finished.' }
-        success { echo '✅ Pipeline completed successfully!' }
-        failure { echo '❌ Pipeline failed. Check logs above.' }
+        always {
+            echo 'Pipeline finished.'
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Check logs above.'
+        }
     }
 }
