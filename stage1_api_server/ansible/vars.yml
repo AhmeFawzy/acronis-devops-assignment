@@ -1,0 +1,4 @@
+app_user: floki
+app_dir: /home/{{ app_user }}/app
+flask_port: 5000
+nginx_port: 80

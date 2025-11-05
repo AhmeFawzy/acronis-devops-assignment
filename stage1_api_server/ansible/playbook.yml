@@ -2,6 +2,8 @@
 - name: Deploy Flask App to Localhost
   hosts: webservers
   become: yes
+  vars_files:
+    - vars.yml
   tasks:
 
     - name: Update apt packages
@@ -21,53 +23,57 @@
 
     - name: Ensure app directory exists
       file:
-        path: /home/ahmed/app
+        path: "{{ app_dir }}"
         state: directory
         mode: '0755'
+        owner: "{{ app_user }}"
 
     - name: Copy Flask app files to target directory
       copy:
         src: ../app/
-        dest: /home/ahmed/app/
-        owner: ahmed
+        dest: "{{ app_dir }}/"
+        owner: "{{ app_user }}"
         mode: '0644'
 
     - name: Create virtual environment for Flask app
-      command: python3 -m venv /home/ahmed/app/venv
+      command: python3 -m venv "{{ app_dir }}/venv"
       args:
-        creates: /home/ahmed/app/venv
+        creates: "{{ app_dir }}/venv"
 
     - name: Install required Python packages inside venv
       shell: |
-        source /home/ahmed/app/venv/bin/activate && pip install --upgrade pip && pip install -r /home/ahmed/app/requirements.txt
+        source {{ app_dir }}/venv/bin/activate && \
+        pip install --upgrade pip && \
+        pip install -r {{ app_dir }}/requirements.txt
       args:
         executable: /bin/bash
 
     - name: Kill any existing Flask app process (if running)
       shell: |
-        if pgrep -f "python3 /home/ahmed/app/server.py" > /dev/null; then
-          pkill -f "python3 /home/ahmed/app/server.py"
+        if pgrep -f "python3 {{ app_dir }}/server.py" > /dev/null; then
+          pkill -f "python3 {{ app_dir }}/server.py"
         fi
       ignore_errors: yes
 
     - name: Start Flask application in background
       shell: |
-        source /home/ahmed/app/venv/bin/activate && nohup python3 /home/ahmed/app/server.py > /home/ahmed/app/server.log 2>&1 &
+        source {{ app_dir }}/venv/bin/activate && \
+        nohup python3 {{ app_dir }}/server.py > {{ app_dir }}/server.log 2>&1 &
       args:
-        chdir: /home/ahmed/app/
+        chdir: "{{ app_dir }}"
         executable: /bin/bash
 
     - name: Wait for Flask app to start
       wait_for:
-        port: 5000
+        port: "{{ flask_port }}"
         delay: 3
         timeout: 20
 
     - name: Verify Flask app is running
       shell: |
-        if pgrep -f "python3 /home/ahmed/app/server.py" > /dev/null; then
+        if pgrep -f "python3 {{ app_dir }}/server.py" > /dev/null; then
           echo "✅ Flask app is running successfully!"
-          echo "Access it at: http://127.0.0.1:5000"
+          echo "Access it at: http://127.0.0.1:{{ flask_port }}"
         else
           echo "❌ Flask app failed to start."
           exit 1
@@ -84,11 +90,11 @@
         dest: /etc/nginx/sites-available/flask_app
         content: |
           server {
-              listen 80;
+              listen {{ nginx_port }};
               server_name _;
 
               location / {
-                  proxy_pass http://127.0.0.1:5000;
+                  proxy_pass http://127.0.0.1:{{ flask_port }};
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -116,8 +122,6 @@
     - name: Ensure firewall allows HTTP traffic (UFW)
       ufw:
         rule: allow
-        port: 80
+        port: "{{ nginx_port }}"
         proto: tcp
       ignore_errors: yes
-
-
