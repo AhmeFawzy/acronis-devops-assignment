@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    environment {
+        GIT_SSH_COMMAND = 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+    }    
     parameters {
         choice(name: 'MODE', choices: ['hello', 'random'], description: 'Choose mode to run')
         string(name: 'REMOTE_HOST', defaultValue: '192.168.20.131', description: 'VM IP for random mode')
