@@ -26,18 +26,24 @@ pipeline {
                             --api-url http://host.docker.internal:5000 \
                             --local-file /app/output/hello.txt
                         '''
-                    } else if (params.MODE == 'random') {
-                        echo 'Running in RANDOM mode...'
+                } else if (params.MODE == 'random') {
+                    echo 'Running in RANDOM mode...'
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'acronis-vm-ssh',
+                        keyFileVariable: 'SSH_KEY_PATH',
+                        usernameVariable: 'VM_USER'
+                    )]) {
                         sh """
-                        docker run --rm -v ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro devops-python-script:stage3 \
-                            --mode random \
-                            --api-url http://host.docker.internal:5000 \
-                            --remote-host ${params.REMOTE_HOST} \
-                            --remote-user ${params.REMOTE_USER} \
-                            --ssh-key /root/.ssh/id_rsa \
-                            --remote-file /home/${params.REMOTE_USER}/random.txt
+                        docker run --rm -v \${SSH_KEY_PATH}:/root/.ssh/id_rsa:ro devops-python-script:stage3 \\
+                            --mode random \\
+                            --api-url http://192.168.20.131:5000 \\
+                            --remote-host ${params.REMOTE_HOST} \\
+                            --remote-user \${VM_USER} \\
+                            --ssh-key /root/.ssh/id_rsa \\
+                            --remote-file /home/\${VM_USER}/random.txt
                         """
                     }
+                }
                 }
             }
         }
