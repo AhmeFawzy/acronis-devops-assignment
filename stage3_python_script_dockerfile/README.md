@@ -2,12 +2,12 @@
 
 ## Overview
 
-This stage wraps the Stage 2 Python script in a Docker container. The container allows two modes:
+This stage wraps the Stage 2 Python script in a Docker container. The container supports two modes:
 
-1. **`hello`** – Fetch `/hello` from the Flask API and save it locally.
-2. **`random`** – Fetch `/random` from the Flask API and save it to a remote VM via SSH.
+1. **`hello`** – Fetch `/hello` from the Flask API and save locally.
+2. **`random`** – Fetch `/random` from the Flask API and save to a remote VM via SSH key.
 
-The image contains all dependencies, so you only need to specify the mode and relevant parameters.
+The Docker image includes all dependencies, so you only need to specify the mode and parameters.
 
 ---
 
@@ -23,35 +23,41 @@ docker build -t devops-python-script:stage3 .
 
 ### 1. Hello Mode (Local File)
 
-Create a folder on your host for output:
+Create an output folder on your host:
 
-```powershell
-mkdir output
+```bash
+mkdir -p output
 ```
 
 Run the container:
 
-```powershell
-docker run --rm -v ${PWD}/output:/app/output devops-python-script:stage3 --mode hello --api-url http://host.docker.internal:5000 --local-file /app/output/hello.txt
+```bash
+docker run --rm -v ${PWD}/output:/app/output devops-python-script:stage3 \
+  --mode hello \
+  --api-url http://host.docker.internal:5000 \
+  --local-file /app/output/hello.txt
 ```
 
 * The file `hello.txt` will appear in `stage3_python_script_dockerfile/output/`.
 
 ---
 
-### 2. Random Mode (Remote File via SSH)
+### 2. Random Mode (Remote File via SSH Key)
 
-```powershell
-docker run --rm devops-python-script:stage3 `
-  --mode random `
-  --api-url http://host.docker.internal:5000 `
-  --remote-host <VM-IP> `
-  --remote-user <USER> `
-  --remote-password <PASSWORD> `
+Run the container and save `/random` to a remote VM:
+
+```bash
+docker run --rm -v ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro devops-python-script:stage3 \
+  --mode random \
+  --api-url http://host.docker.internal:5000 \
+  --remote-host <VM-IP> \
+  --remote-user <USER> \
+  --ssh-key /root/.ssh/id_rsa \
   --remote-file /home/<USER>/random.txt
 ```
 
-* Replace `<VM-IP>`, `<USER>`, `<PASSWORD>` with your VM details.
+* Replace `<VM-IP>` and `<USER>` with your VM details.
+* Ensure passwordless SSH login using the mounted key.
 * Verify the file on the VM:
 
 ```bash
@@ -63,6 +69,7 @@ cat /home/<USER>/random.txt
 
 ## Notes
 
-* `host.docker.internal` allows the container to reach the Flask API on your host.
-* Use `--rm` for ephemeral containers.
+* Use `host.docker.internal` to reach the Flask API running on your host/VM.
 * Mount a local folder to persist files written by the container.
+* `--rm` ensures the container is ephemeral.
+* The SSH key must have proper permissions (`chmod 600 ~/.ssh/id_rsa`).
