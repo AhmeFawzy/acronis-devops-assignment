@@ -35,13 +35,12 @@ pipeline {
                         )]) {
                             sh '''
                             echo "SSH_KEY_PATH = $SSH_KEY_PATH"
-                            echo "File type:"
-                            ls -ld "$SSH_KEY_PATH"
-                            file "$SSH_KEY_PATH"
                             if [ -f "$SSH_KEY_PATH" ]; then
-                                echo "✅ It's a file!"
+                                echo "✅ SSH key is a valid file."
+                                ls -l "$SSH_KEY_PATH"
                             else
-                                echo "❌ It's NOT a file!"
+                                echo "❌ ERROR: SSH key is NOT a file!"
+                                exit 1
                             fi
                             '''
                             sh """
